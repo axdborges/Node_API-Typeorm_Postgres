@@ -9,8 +9,8 @@ import {
 import {
 	createUserService,
 	readUserService,
-	updateUserService,
-	deleteUserService,
+	// updateUserService,
+	// deleteUserService,
 	loginUserService,
 } from '../services/users.service';
 
@@ -45,40 +45,40 @@ export const readUserController = async (
 	}
 };
 
-export const updateUserController = async (
-	request: Request,
-	response: Response,
-) => {
-	try {
-		const { id } = request.params;
-		const user: IUserUpdate = request.body;
-		const res = await updateUserService(user, id);
-		return response.status(200).json(res);
-	} catch (error) {
-		if (error instanceof Error) {
-			return response
-				.status(400)
-				.json({ message: 'cannot update user', error: error.message });
-		}
-	}
-};
+// export const updateUserController = async (
+// 	request: Request,
+// 	response: Response,
+// ) => {
+// 	try {
+// 		const { id } = request.params;
+// 		const user: IUserUpdate = request.body;
+// 		const res = await updateUserService(user, id);
+// 		return response.status(200).json(res);
+// 	} catch (error) {
+// 		if (error instanceof Error) {
+// 			return response
+// 				.status(400)
+// 				.json({ message: 'cannot update user', error: error.message });
+// 		}
+// 	}
+// };
 
-export const deleteUserController = async (
-	request: Request,
-	response: Response,
-) => {
-	try {
-		const { id } = request.params;
-		const res = await deleteUserService(id);
-		return response.status(200).json(res);
-	} catch (error) {
-		if (error instanceof Error) {
-			return response
-				.status(400)
-				.json({ message: 'cannot delete user', error: error.message });
-		}
-	}
-};
+// export const deleteUserController = async (
+// 	request: Request,
+// 	response: Response,
+// ) => {
+// 	try {
+// 		const { id } = request.params;
+// 		const res = await deleteUserService(id);
+// 		return response.status(200).json(res);
+// 	} catch (error) {
+// 		if (error instanceof Error) {
+// 			return response
+// 				.status(400)
+// 				.json({ message: 'cannot delete user', error: error.message });
+// 		}
+// 	}
+// };
 
 export const loginUserController = async (
 	request: Request,
@@ -86,8 +86,8 @@ export const loginUserController = async (
 ) => {
 	try {
 		const login: IUserLogin = request.body;
-        const logged = await loginUserService(login);
-        return response.status(200).json(logged)
+        const token = await loginUserService(login);
+        return response.status(200).json({token})
 	} catch (error) {
         if (error instanceof Error) {
 			return response

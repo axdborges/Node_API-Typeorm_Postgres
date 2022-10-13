@@ -9,10 +9,10 @@ export interface IUser {
 	id: string;
 	name: string;
 	email: string;
-    password: string;
 	isAdm: boolean;
 	createdAt: Date;
 	updatedAt: Date;
+	isActive: boolean;
 }
 
 export interface IUserLogin {
@@ -27,11 +27,12 @@ export interface IUserUpdate {
 }
 
 export interface IUserCreate {
-    name: string;
+	name: string;
 	email: string;
-    password: string;
+	password: string;
 	isAdm: boolean;
-	createdAt: Date;
-	updatedAt: Date;
-    id: string;
+	// createdAt: Date;
+	// updatedAt: Date;
+	// id: string;
+    isActive: boolean;
 }
