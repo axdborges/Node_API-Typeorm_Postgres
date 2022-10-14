@@ -36,3 +36,19 @@ export interface IUserCreate {
 	// id: string;
     isActive: boolean;
 }
+
+export interface IUserDesconstruct {
+	name?: string;
+	email?: string;
+	password?: string;
+	isAdm?: boolean;
+	createdAt?: Date;
+	updatedAt?: Date;
+	id?: string;
+    isActive?: boolean;
+}
+
+export interface IVerify {
+    id: string;
+    isAdm: boolean;
+}

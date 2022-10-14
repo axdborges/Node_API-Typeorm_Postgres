@@ -40,7 +40,6 @@ describe("/users", () => {
 
     test("POST /users -  should not be able to create a user that already exists",async () => {
         const response = await request(app).post('/users').send(mockedUser)
-
         expect(response.body).toHaveProperty("message")
         expect(response.status).toBe(400)
              
@@ -149,9 +148,9 @@ describe("/users", () => {
         
         const userTobeUpdateRequest = await request(app).get("/users").set("Authorization", token)
         const userTobeUpdateId = userTobeUpdateRequest.body[0].id
-
+        
         const response = await request(app).patch(`/users/${userTobeUpdateId}`).set("Authorization",token).send(newValues)
-
+        
         expect(response.body).toHaveProperty("message")
         expect(response.status).toBe(401)
     })

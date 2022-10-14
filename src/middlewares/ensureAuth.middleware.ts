@@ -20,13 +20,19 @@ export const ensureAuthMiddleware = async (
     jwt.verify(
         token,
         process.env.SECRET_KEY as string,
-        (error, decoded) => {
+        (error, decoded: any) => {
             if(error){
                 return response.status(401).json({
                     message: 'Invalid Token',
                 });
             }
-            next()
+
+            request.user = {
+                isAdm: decoded.isAdm,
+                id: decoded.sub
+            }
+
+            return next()
         }
     )
 };

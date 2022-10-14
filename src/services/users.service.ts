@@ -2,7 +2,6 @@ import AppDataSource from '../data-source';
 import { User } from '../entities/users.entities';
 import 'dotenv/config';
 
-import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -12,43 +11,39 @@ import {
 	IUserLogin,
 	IUserRequest,
 	IUserUpdate,
+	IVerify,
 } from '../interfaces/users';
 
-export const createUserService = async ({
-	name,
-	email,
-	isAdm,
-	password,
-}: IUserRequest): Promise<IUser | undefined> => {
+export const createUserService = async (
+	data: IUserRequest,
+): Promise<IUser | undefined> => {
 	try {
-		const hashedPassword = await bcrypt.hash(password, 10);
+		const hashedPassword = await bcrypt.hash(data.password, 10);
 
 		const userRepository = AppDataSource.getRepository(User);
 
-		const alreadyExistis = await userRepository.findOneBy({ email: email });
+		const alreadyExistis = await userRepository.findOneBy({
+			email: data.email,
+		});
 
 		if (alreadyExistis) {
 			throw new Error('User already exists');
 		}
 		const createUser = userRepository.create({
-			name,
-			email,
+			name: data.name,
+			email: data.email,
 			password: hashedPassword,
-			isAdm,
+			isAdm: data.isAdm,
 			isActive: true,
 		});
 
 		await userRepository.save(createUser);
 
-		const userResponse: IUser = {
-			name,
-			email,
-			isAdm,
-			isActive: createUser.isActive,
-			createdAt: createUser.createdAt,
-			updatedAt: createUser.updatedAt,
-			id: createUser.id,
-		};
+		const findUserResponse = await userRepository.findOneBy({
+			email: data.email,
+		});
+
+		const { password, ...userResponse }: any = findUserResponse;
 
 		return userResponse;
 	} catch (error) {
@@ -83,51 +78,108 @@ export const readUserService = async (): Promise<IUser[] | undefined> => {
 	}
 };
 
-// export const updateUserService = async (user: IUserUpdate, id: string) => {
-// 	try {
-// 		const findUser: IUser | undefined = users.find((elem) => elem.id === id);
-// 		if (!findUser) {
-// 			throw new Error('user not found');
-// 		}
-// 		if (findUser) {
-// 			if (user.name) {
-// 				findUser.name = user.name;
-// 			}
-// 			if (user.email) {
-// 				findUser.email = user.email;
-// 			}
-// 			if (user.password) {
-// 				const hashedPassword = await bcrypt.hash(user.password, 10);
-// 				findUser.password = hashedPassword;
-// 			}
-// 		}
-// 		return findUser;
-// 	} catch (error) {
-// 		if (error instanceof Error) {
-// 			throw new Error(error.message);
-// 		}
-// 	}
-// };
+export const updateUserService = async (
+	user: any,
+	id: string,
+	verify: IVerify,
+): Promise<IUser | undefined> => {
+	try {
+		const userRepository = AppDataSource.getRepository(User);
+		const findUser = await userRepository.findOneBy({ id });
 
-// export const deleteUserService = async (id: string) => {
-// 	try {
-// 		const userIndex = users.findIndex((elem) => elem.id === id);
-// 		if (!userIndex) {
-// 			throw new Error('user not found');
-// 		}
-// 		users.splice(userIndex, 1);
-// 		return 'user deleted with success';
-// 	} catch (error) {
-// 		if (error instanceof Error) {
-// 			throw new Error(error.message);
-// 		}
-// 	}
-// };
+		if (!findUser) {
+			throw new Error('user not found');
+		}
+		if (user.isAdm !== undefined || null) {
+			throw new Error('Cannot update isAdm field');
+		}
+		if (user.id !== undefined || null) {
+			throw new Error('Cannot update id field');
+		}
+		if (user.isActive !== undefined || null) {
+			throw new Error('Cannot update isActive field');
+		}
+		if (verify.isAdm) {
+			if (user.name) {
+				await userRepository.update(id, {
+					name: user.name,
+				});
+			}
+			if (user.email) {
+				await userRepository.update(id, {
+					email: user.email,
+				});
+			}
+			if (user.password) {
+				const hashedPassword = await bcrypt.hash(user.password, 10);
+				await userRepository.update(id, {
+					password: hashedPassword,
+				});
+			}
+		} else if (verify.id === id) {
+			if (user.name) {
+				await userRepository.update(id, {
+					name: user.name,
+				});
+			}
+			if (user.email) {
+				await userRepository.update(id, {
+					email: user.email,
+				});
+			}
+			if (user.password) {
+				const hashedPassword = await bcrypt.hash(user.password, 10);
+				await userRepository.update(id, {
+					password: hashedPassword,
+				});
+			}
+		} else {
+			throw new Error('Cannot update user');
+		}
+
+		const findUserResponse = await userRepository.findOneBy({ id });
+
+		const { password, ...userResponse }: any = findUserResponse;
+
+		return userResponse;
+	} catch (error) {
+		if (error instanceof Error) {
+			throw new Error(error.message);
+		}
+	}
+};
+
+export const deleteUserService = async (
+	id: string,
+): Promise<string | undefined> => {
+	try {
+		const userRepository = AppDataSource.getRepository(User);
+		const findUser = await userRepository.findOneBy({ id });
+
+		if (!findUser) {
+			throw new Error('user not found');
+		}
+		if (!findUser.isActive) {
+			throw new Error('user already inactive');
+		} else {
+			await userRepository.update(id, { isActive: false });
+		}
+
+		return 'user deleted with success';
+	} catch (error) {
+		if (error instanceof Error) {
+			throw new Error(error.message);
+		}
+	}
+};
 
 export const loginUserService = async (
 	user: IUserLogin,
 ): Promise<string | undefined> => {
 	try {
+		if (!user.password) {
+			throw new Error('Password is required');
+		}
 		const userRepository = AppDataSource.getRepository(User);
 		const findUser = await userRepository.findOneBy({ email: user.email });
 

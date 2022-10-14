@@ -4,13 +4,14 @@ import {
 	IUserLogin,
 	IUserRequest,
 	IUserUpdate,
+    IVerify,
 } from '../interfaces/users';
 
 import {
 	createUserService,
 	readUserService,
-	// updateUserService,
-	// deleteUserService,
+	updateUserService,
+	deleteUserService,
 	loginUserService,
 } from '../services/users.service';
 
@@ -26,7 +27,7 @@ export const createUserController = async (
 		if (error instanceof Error) {
 			return response
 				.status(400)
-				.json({ message: 'cannot create user', error: error.message });
+				.json({ message: error.message });
 		}
 	}
 };
@@ -40,45 +41,56 @@ export const readUserController = async (
 		return response.status(200).json(users);
 	} catch (error) {
 		if (error instanceof Error) {
-			return response.status(400).json({ message: 'cannot read users', error: error.message });
+			return response
+				.status(400)
+				.json({ message: error.message });
 		}
 	}
 };
 
-// export const updateUserController = async (
-// 	request: Request,
-// 	response: Response,
-// ) => {
-// 	try {
-// 		const { id } = request.params;
-// 		const user: IUserUpdate = request.body;
-// 		const res = await updateUserService(user, id);
-// 		return response.status(200).json(res);
-// 	} catch (error) {
-// 		if (error instanceof Error) {
-// 			return response
-// 				.status(400)
-// 				.json({ message: 'cannot update user', error: error.message });
-// 		}
-// 	}
-// };
+export const updateUserController = async (
+	request: Request,
+	response: Response,
+) => {
+	try {
+        const verify: IVerify = request.user
+		const { id } = request.params;
+		const user: IUserUpdate = request.body;
+		const res = await updateUserService(user, id, verify);
+		return response.status(200).json(res);
+	} catch (error) {
+		if (error instanceof Error) {
+            if(error.message.includes('Cannot')){
+                return response.status(401).json({
+                    message: error.message
+                })
+            }
+			return response
+				.status(400)
+				.json({ message: error.message });
+		}
+	}
+};
 
-// export const deleteUserController = async (
-// 	request: Request,
-// 	response: Response,
-// ) => {
-// 	try {
-// 		const { id } = request.params;
-// 		const res = await deleteUserService(id);
-// 		return response.status(200).json(res);
-// 	} catch (error) {
-// 		if (error instanceof Error) {
-// 			return response
-// 				.status(400)
-// 				.json({ message: 'cannot delete user', error: error.message });
-// 		}
-// 	}
-// };
+export const deleteUserController = async (
+	request: Request,
+	response: Response,
+) => {
+	try {
+		const { id } = request.params;
+		const res = await deleteUserService(id);
+		return response.status(204).json(res);
+	} catch (error) {
+		if (error instanceof Error) {
+            if(error.message.includes('user already inactive')){
+                return response.status(400).json({message: error.message})
+            }
+			return response
+				.status(404)
+				.json({ message: error.message });
+		}
+	}
+};
 
 export const loginUserController = async (
 	request: Request,
@@ -86,13 +98,13 @@ export const loginUserController = async (
 ) => {
 	try {
 		const login: IUserLogin = request.body;
-        const token = await loginUserService(login);
-        return response.status(200).json({token})
+		const token = await loginUserService(login);
+		return response.status(200).json({ token });
 	} catch (error) {
-        if (error instanceof Error) {
+		if (error instanceof Error) {
 			return response
-				.status(400)
-				.json({ message: 'cannot login', error: error.message });
+				.status(403)
+				.json({ message: error.message });
 		}
-    }
+	}
 };
